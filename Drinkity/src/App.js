@@ -382,18 +382,3 @@ const styles = StyleSheet.create({
   },
 });
 
-
-
-
-/* <SafeAreaView style={styles.screen}>
-      <Text>screen API</Text>
-      <QRCodeScanner
-        onRead={e => {
-          console.log(e);
-        }}
-        flashMode={RNCamera.Constants.FlashMode.off}
-        reactivate={true}
-        reactivateTimeout={1000}
-      />
-      <Button title={'Back to main screen'} onPress={() => navigation.navigate('Home')}/>
-    </SafeAreaView>*/
