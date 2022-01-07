@@ -1,20 +1,19 @@
 import * as React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import {
-  AppRegistry,
   StyleSheet,
   Text,
   TouchableOpacity,
-  Linking, Image, View, SafeAreaView, Button, Pressable
+  Image, View, SafeAreaView, Button, Pressable
 } from "react-native";
-import QRCodeScanner from 'react-native-qrcode-scanner';
-import {RNCamera} from 'react-native-camera';
-import { request } from "react-native-permissions";
 
-import { AddDrink } from "./addDrink.js";
+
+import { AddDrinksPart } from "./addDrink.js";
 import { ItemsProvider} from "./reduxstuff.js";
+import {Api} from "./api";
 import { useItems} from "./reduxstuff.js";
 import { useEffect } from "react";
 
@@ -22,23 +21,147 @@ import { useEffect } from "react";
 //const [dailyWater, setDaylyWater] = React.useState(1500);
 //const [waterDrank, setWaterDrank] = React.useState(0);
 
-
-//const drinkUp = (amounth) => {
-  //React.setWaterDrank = (waterDrank + 100);
-  //console.log(waterDrank);
-//}
-
 function Home ({route, navigation}){
   const [water,setWater] = React.useState(0);
   const [mainPicture, setMainPicture] = React.useState(require("./assets/mainpicture/level0.png"));
   const [items, setItems] = useItems();
+  const [drinks, setDrinks] = React.useState([
+    ["1", 100],
+    ["2", 150],
+    ["3", 500],
+    ["4", 2000]
+    ]);
+  const [usageDrinks, setUsageDrinks] = React.useState([0,0,0,0])
 
-  const firstDrink = (route.params in window) ? require("./assets/glass.png") : items[0]["firstPicture"];
+  const [firstTime,setFirstTime] = React.useState(true);
+  const pictures = {
+    "1": require("./assets/drinks_water/cup_blue.png"),
+    "2": require("./assets/drinks_water/glass_blue.png"),
+    "3": require("./assets/drinks_water/big_glass_blue.png"),
+    "4": require("./assets/drinks_water/bottle_blue.png"),
+  }
+
+  useEffect(() => {
+    if (firstTime) {
+      setFirstTime(false)
+    }
+    else{
+      storeData('drinks', drinks)
+    }
+  },[usageDrinks])
+
+  useEffect( () => {
+    if(!(route.params in window)) {
+      //console.log(items)
+      //setItems()
+      rearange()
+    }
+    else{
+      loadData('drinks').then((data) => {
+        if(data != null){
+          setDrinks(data)
+        }})
+    }
+  },[items])
+
+  async function loadData(key) {
+    try{
+      const jsondata =  await AsyncStorage.getItem(key);
+      return JSON.parse(jsondata);
+    }catch(e){
+      console.error("Couldnt load data marked by key: " + key);
+    }
+  }
+
+  async function storeData(key, value) {
+    try {
+      await AsyncStorage.setItem(key, JSON.stringify(value))
+    } catch (e) {
+      console.error("Failed to save data: " + key);
+    }
+  }
+
+  const rearange = () => {
+    let usages = [...usageDrinks]
+    let allDrinks = [...drinks]
+    let maxusage = Math.max(...usages)
+
+    let test = false
+    for (let i = 0; i < 3; i++) {
+      if (allDrinks[i][1] === items[0]["amounth"] && allDrinks[i][0] === items[0]["firstPicture"]) {
+        test = true
+        break
+      }
+    }
+
+    if (test) {
+      let position
+      for (let i = 0; i < 4; i++){
+        if(allDrinks[i][0] === items[0]["firstPicture"] && allDrinks[i][1] === items[0]["amounth"]){
+          position = i;
+          if(position === 0) return
+          break
+        }
+      }
+
+      let tmp = Math.max(...usages)
+      let tmp1 = allDrinks[position]
+
+      for (let i = 2; i >= 0; i--){
+        if(i !== position){
+          usages[i+1] = usages[i]
+          allDrinks[i+1] = allDrinks[i]
+        }
+      }
+      usages[0] = tmp+1
+      allDrinks[0] = tmp1
+      //console.log(usages)
+    }
+    else {
+      //rearange
+      for (let i = 2; i >= 0; i--) {
+        allDrinks[i + 1] = allDrinks[i]
+        usages[i + 1] = usages[i]
+      }
+      allDrinks[0] = [items[0]["firstPicture"], items[0]["amounth"]]
+      usages[0] = maxusage + 1
+
+      //stop overusing
+      if (Math.min(...usages) >= 10) {
+        for (let i = 0; i < 4; i++) {
+          usages[i] -= 10
+        }
+      }
+    }
+
+    //set new values
+    setUsageDrinks(usages)
+    setDrinks(allDrinks)
+
+  }
+
+  const changeUsage = (drinkPosition) => {
+    let tmp = [...usageDrinks]
+    tmp[drinkPosition] +=1
+
+    if(drinkPosition > 0 && tmp[drinkPosition-1] < tmp[drinkPosition]){
+      let allDrinks = [...drinks]
+      let shuffle = tmp[drinkPosition]
+      tmp[drinkPosition] = tmp[drinkPosition-1]
+      tmp[drinkPosition-1] = shuffle
+
+      shuffle = allDrinks[drinkPosition]
+      allDrinks[drinkPosition] = allDrinks[drinkPosition-1]
+      allDrinks[drinkPosition-1] = shuffle
+      setDrinks(allDrinks)
+    }
+
+    setUsageDrinks(tmp)
+  }
 
   const drink = (waterDrinked) => {
     setWater(water+waterDrinked);
     let percentage = (water+waterDrinked)/2000*100;
-
 
     if(percentage <5){
       setMainPicture(require("./assets/mainpicture/level0.png"));
@@ -112,29 +235,33 @@ function Home ({route, navigation}){
       <Pressable style={styles.main_cogwheel} onPress={() => {
         navigation.navigate('Settings')}
       }>
-        <Image source={require('./assets/cogwheel.png')} style={styles.image}></Image>
+        <Image source={require('./assets/cogwheel.png')} style={styles.image}/>
       </Pressable>
 
       <View style={styles.main_image}>
-        <Image source={mainPicture}></Image>
+        <Image source={mainPicture}/>
         <Text style={styles.water_amount}>{water} ml</Text>
       </View>
       <View style={styles.main_drinks}>
 
-        <Pressable style={{flex: 1}} onPress={() => navigation.navigate('AddDrink')}>
+        <Pressable style={{flex: 1}} onPress={() => navigation.navigate('AddDrinksPart')}>
           <Image source={require("./assets/add_drink.png")} style={styles.image}/>
         </Pressable>
-        <Pressable style={{flex: 1}} onPress={() => drink(100)}>
-          <Image source={firstDrink} style={styles.image}/>
+        <Pressable style={{flex: 1, flexDirection: "column"}} onPress={() => {drink(drinks[0][1]), changeUsage(0)}}>
+          <Image source={pictures[drinks[0][0]]} style={styles.image}/>
+          <Text style={styles.pictures_description}>{drinks[0][1]} ml</Text>
         </Pressable>
-        <Pressable style={{flex: 1}}>
-          <Image source={require('./assets/glass.png')} style={styles.image}/>
+        <Pressable style={{flex: 1}} onPress={() => {drink(drinks[1][1]), changeUsage(1)}}>
+          <Image source={pictures[drinks[1][0]]} style={styles.image}/>
+          <Text style={styles.pictures_description}>{drinks[1][1]} ml</Text>
         </Pressable>
-        <Pressable style={{flex: 1}}>
-          <Image source={require('./assets/glass.png')} style={styles.image}/>
+        <Pressable style={{flex: 1}} onPress={() => {drink(drinks[2][1]), changeUsage(2)}}>
+          <Image source={pictures[drinks[2][0]]} style={styles.image}/>
+          <Text style={styles.pictures_description}>{drinks[2][1]} ml</Text>
         </Pressable>
-        <Pressable style={{flex: 1}}>
-          <Image source={require('./assets/glass.png')} style={styles.image}/>
+        <Pressable style={{flex: 1}} onPress={() => {drink(drinks[3][1]), changeUsage(3)}}>
+          <Image source={pictures[drinks[3][0]]} style={styles.image}/>
+          <Text style={styles.pictures_description}>{drinks[3][1]} ml</Text>
         </Pressable>
 
       </View>
@@ -145,7 +272,7 @@ function Home ({route, navigation}){
 
       <View style={styles.main_button_area}>
         <TouchableOpacity style={styles.main_button} onPress={() => navigation.navigate('Api')}>
-          <Text style={{color: "white"}}>API</Text>
+          <Text style={{color: "white"}}>Find inspiration online</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>
@@ -162,28 +289,16 @@ function Settings ({navigation}) {
     )
   }
 
-function Api ({navigation}) {
-  return (
-    <SafeAreaView style={styles.screen}>
-      <Text>screen API</Text>
-      <Button title={'Back to main screen'} onPress={() => navigation.navigate('Home')}/>
-    </SafeAreaView>
-  )
-}
-
 
 const Stack = createNativeStackNavigator();
 
-
 export default function App() {
-
-
   return (
     <ItemsProvider>
     <NavigationContainer>
       <Stack.Navigator screenOptions={{headerShown: false}}>
         <Stack.Screen name="Home" component={Home}/>
-        <Stack.Screen name="AddDrink" component={AddDrink}/>
+        <Stack.Screen name="AddDrinksPart" component={AddDrinksPart}/>
         <Stack.Screen name="Settings" component={Settings}/>
         <Stack.Screen name="Api" component={Api}/>
       </Stack.Navigator>
@@ -196,6 +311,7 @@ const styles = StyleSheet.create({
   screen: {
     flex: 1,
     flexDirection: "column",
+    backgroundColor: "white"
   },
 
   main_image: {
@@ -203,7 +319,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: '#99d8ea',
-
+    borderBottomColor: "darkblue",
+    borderBottomWidth: 5
   },
   water_amount: {
     fontSize: 25,
@@ -211,10 +328,19 @@ const styles = StyleSheet.create({
     color: 'darkblue',
   },
   main_drinks: {
-    flex: 0.75,
+    flex: 1,
     flexDirection: "row",
     marginTop: "5%",
-    marginBottom: "10%",
+    marginBottom: "5%",
+    paddingBottom: "5%",
+    borderBottomColor: "darkblue",
+    borderBottomWidth: 5
+  },
+  pictures_description: {
+    color: "black",
+    fontSize: 15,
+    fontWeight: "500",
+    textAlign: "center",
   },
   main_text_box: {
     flex: 1,
@@ -225,7 +351,8 @@ const styles = StyleSheet.create({
   },
   main_text: {
     color: "black",
-    fontSize: 20,
+    fontSize: 25,
+    textAlign: "center"
   },
   main_button_area: {
     flex: 1,
@@ -235,11 +362,11 @@ const styles = StyleSheet.create({
 
   },
   main_button: {
-    backgroundColor: 'black',
-    color: "white",
+    backgroundColor: 'darkblue',
     alignItems: "center",
     paddingTop: "5%",
-    paddingBottom: "5%"
+    paddingBottom: "5%",
+    borderRadius: 10,
   },
   image: {
     flex: 1,
@@ -258,12 +385,15 @@ const styles = StyleSheet.create({
 
 
 
-//<QRCodeScanner
-//       onRead={e => {
-//         console.log('new', e);
-//         console.log(test(e));
-//       }}
-//       flashMode={RNCamera.Constants.FlashMode.off}
-//       reactivate={true}
-//       reactivateTimeout={1000}
-//     />
+/* <SafeAreaView style={styles.screen}>
+      <Text>screen API</Text>
+      <QRCodeScanner
+        onRead={e => {
+          console.log(e);
+        }}
+        flashMode={RNCamera.Constants.FlashMode.off}
+        reactivate={true}
+        reactivateTimeout={1000}
+      />
+      <Button title={'Back to main screen'} onPress={() => navigation.navigate('Home')}/>
+    </SafeAreaView>*/
