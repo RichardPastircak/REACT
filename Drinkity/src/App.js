@@ -2,13 +2,11 @@ import * as React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import CalendarStrip from 'react-native-calendar-strip';
+import {useTranslation} from "react-i18next";
+import './i18n';
 
-import {
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  Image, View, SafeAreaView, Button, Pressable
-} from "react-native";
+import { StyleSheet, Text, TouchableOpacity, Image, View, SafeAreaView, Button, Pressable } from "react-native";
 
 
 import { AddDrinksPart } from "./addDrink.js";
@@ -16,12 +14,12 @@ import { ItemsProvider} from "./reduxstuff.js";
 import {Api} from "./api";
 import { useItems} from "./reduxstuff.js";
 import { useEffect } from "react";
+import { mainUserData} from "./openScreen";
+import {settings} from "./openScreen";
 
-
-//const [dailyWater, setDaylyWater] = React.useState(1500);
-//const [waterDrank, setWaterDrank] = React.useState(0);
 
 function Home ({route, navigation}){
+  const { t, i18n } = useTranslation();
   const [water,setWater] = React.useState(0);
   const [mainPicture, setMainPicture] = React.useState(require("./assets/mainpicture/level0.png"));
   const [items, setItems] = useItems();
@@ -32,6 +30,9 @@ function Home ({route, navigation}){
     ["4", 2000]
     ]);
   const [usageDrinks, setUsageDrinks] = React.useState([0,0,0,0])
+  const [suggestedWater, setSuggestedWater] = React.useState(0)
+  const [waterAmounthRecieved, setWaterAmounthRecieved] = React.useState(false)
+  const [currDate, setCurrDate] = React.useState("")
 
   const [firstTime,setFirstTime] = React.useState(true);
   const pictures = {
@@ -40,6 +41,46 @@ function Home ({route, navigation}){
     "3": require("./assets/drinks_water/big_glass_blue.png"),
     "4": require("./assets/drinks_water/bottle_blue.png"),
   }
+
+  async function removeItemm(key){
+    try {
+      const test = await AsyncStorage.removeItem(key)
+    }
+    catch (e){
+      console.error("Removing item with key: " + key + "failed.")
+    }
+  }
+
+  useEffect(() => {
+    let day = new Date().toLocaleDateString()
+    setCurrDate(day)
+    //removeItemm(day)
+    loadData(day).then((water) => {
+      if(water != null){
+        updateMainPicture(water/suggestedWater*100)
+        setWater(water)
+      }
+      else{drink(0)}
+    })
+  },[])
+
+  React.useEffect(() => {
+    async function checkNewUser() {
+      try {
+        const value = await AsyncStorage.getItem('waterAmounth')
+        if(value == null) {
+          navigation.navigate("openScreen")
+        }
+        else{
+          setSuggestedWater(value)
+          setWaterAmounthRecieved(true)
+        }
+        //await AsyncStorage.removeItem('waterAmounth')
+      } catch(e) {  console.error("Something when terrible wrong when loading user waterAmounth: " + e) }
+    }
+
+    checkNewUser()
+  },[items["waterAmounth"]])
 
   useEffect(() => {
     if (firstTime) {
@@ -51,18 +92,18 @@ function Home ({route, navigation}){
   },[usageDrinks])
 
   useEffect( () => {
-    if(!(route.params in window)) {
-      //console.log(items)
-      //setItems()
+    if(items[0] !== undefined) {
       rearange()
     }
     else{
       loadData('drinks').then((data) => {
         if(data != null){
           setDrinks(data)
+          //console.log(data)
         }})
     }
   },[items])
+
 
   async function loadData(key) {
     try{
@@ -159,10 +200,7 @@ function Home ({route, navigation}){
     setUsageDrinks(tmp)
   }
 
-  const drink = (waterDrinked) => {
-    setWater(water+waterDrinked);
-    let percentage = (water+waterDrinked)/2000*100;
-
+  const updateMainPicture = (percentage) => {
     if(percentage <5){
       setMainPicture(require("./assets/mainpicture/level0.png"));
     }
@@ -226,12 +264,41 @@ function Home ({route, navigation}){
     else{
       setMainPicture(require("./assets/mainpicture/level100.png"));
     }
+  }
 
+  const drink = (waterDrinked) => {
+    storeData(currDate, water+waterDrinked)
+    let percentage = (water+waterDrinked)/suggestedWater*100;
+    setWater(water+waterDrinked);
 
+    updateMainPicture(percentage)
   }
 
   return(
     <SafeAreaView style={styles.screen}>
+      <View style={{ flex: 0.77, borderBottomWidth: 6, borderBottomColor: "darkblue"}}>
+        <CalendarStrip
+          scrollable
+          style={{height: 68, paddingTop: 5, paddingBottom: 5}}
+          calendarColor={'#1aa8ad'}
+          calendarHeaderStyle={{color: 'black', fontSize: 15}}
+          dateNumberStyle={{color: 'black'}}
+          dateNameStyle={{color: 'black', fontSize: 10, fontWeight: "500"}}
+          highlightDateNumberStyle={{color: "yellow"}}
+          highlightDateNameStyle={{color: "yellow", fontSize: 10, fontWeight: "500"}}
+          iconContainer={{flex: 0.1}}
+          onDateSelected={(d) => {
+            let day = d.format("MM/DD/YY")
+            setCurrDate(day)
+            loadData(day).then((data) => {
+              if(data != null){
+                setWater(data)
+              }else {setWater(0)}
+            })
+          }}
+        />
+      </View>
+
       <Pressable style={styles.main_cogwheel} onPress={() => {
         navigation.navigate('Settings')}
       }>
@@ -240,7 +307,7 @@ function Home ({route, navigation}){
 
       <View style={styles.main_image}>
         <Image source={mainPicture}/>
-        <Text style={styles.water_amount}>{water} ml</Text>
+        <Text style={styles.water_amount}>{water}/{suggestedWater} ml</Text>
       </View>
       <View style={styles.main_drinks}>
 
@@ -267,27 +334,17 @@ function Home ({route, navigation}){
       </View>
 
       <View style={styles.main_text_box}>
-      <Text style={styles.main_text}>Tired of drinking just a water? Find inspiration online!</Text>
+      <Text style={styles.main_text}>{t('Tired of drinking just a water? Find inspiration online!')}</Text>
       </View>
 
       <View style={styles.main_button_area}>
         <TouchableOpacity style={styles.main_button} onPress={() => navigation.navigate('Api')}>
-          <Text style={{color: "white"}}>Find inspiration online</Text>
+          <Text style={{color: "white"}}>{t('Find inspiration online')}</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>
   )
 }
-
-
-function Settings ({navigation}) {
-    return (
-      <SafeAreaView style={styles.screen}>
-        <Text>screen COG WHEEL</Text>
-        <Button title={'Back to main screen'} onPress={() => navigation.navigate('Home')}/>
-      </SafeAreaView>
-    )
-  }
 
 
 const Stack = createNativeStackNavigator();
@@ -296,10 +353,11 @@ export default function App() {
   return (
     <ItemsProvider>
     <NavigationContainer>
-      <Stack.Navigator screenOptions={{headerShown: false}}>
+      <Stack.Navigator screenOptions={{headerShown: false}} initialRouteName={"Home"}>
+        <Stack.Screen name="openScreen" component={mainUserData}/>
         <Stack.Screen name="Home" component={Home}/>
         <Stack.Screen name="AddDrinksPart" component={AddDrinksPart}/>
-        <Stack.Screen name="Settings" component={Settings}/>
+        <Stack.Screen name="Settings" component={settings}/>
         <Stack.Screen name="Api" component={Api}/>
       </Stack.Navigator>
     </NavigationContainer>

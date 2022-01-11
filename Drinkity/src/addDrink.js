@@ -16,8 +16,11 @@ import { ItemsProvider} from "./reduxstuff.js";
 import {launchCamera, launchImageLibrary} from 'react-native-image-picker';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import {useTranslation} from "react-i18next";
+import './i18n';
 
-export function AddDrink ({navigation}) {
+export function AddDrink ({route, navigation}) {
+  const { t, i18n } = useTranslation();
   const [items, setItems] = useItems(); // <- using items context as global useState
   const [firstPicture, setFirstPicture] = React.useState("");
   const [amounth, setAmounth] = React.useState(0);
@@ -30,18 +33,21 @@ export function AddDrink ({navigation}) {
     }
   },[amounth]);
 
+
   useEffect(() => {
     async function loadData() {
       try {
-        //await AsyncStorage.removeItem("userCustomDrinks")
+        //await AsyncStorage.removeItem("userCustomDrinks")//
         let jsondata = await AsyncStorage.getItem("userCustomDrinks");
-        jsondata = JSON.parse(jsondata)
-        let ownDrinksData = []
-        for (let i in jsondata){
-          ownDrinksData.push([<Image source={{uri: jsondata[i][0]}} key={"images"+i} style={{height: 150, width: 150, resizeMode: "contain"}}/>])
-          ownDrinksData.push(<Text key={"test"+i} style={styles.add_drink_picture_text}>{jsondata[i][1]} ml</Text>)
-        }
-        setUserImages(ownDrinksData)
+          jsondata = JSON.parse(jsondata)
+          let ownDrinksData = []
+          for (let i in jsondata) {
+            ownDrinksData.push([<Image source={{ uri: jsondata[i][0] }} key={"images" + i}
+                                       style={{ height: 150, width: 150, resizeMode: "contain" }} />])
+            ownDrinksData.push(<Text key={"test" + i} style={styles.add_drink_picture_text}>{jsondata[i][1]} ml</Text>)
+          }
+          setUserImages(ownDrinksData)
+
       } catch (e) {
         console.error("Couldn't load user custom drinks: " + e);
       }
@@ -51,12 +57,14 @@ export function AddDrink ({navigation}) {
 
   async function storeUserImage() {
     try {
-      let storingData = [items[0]["uri"],items[1]]
+      let storingData = [route.params[0]["uri"],route.params[1]]
       let jsondata = await AsyncStorage.getItem("userCustomDrinks");
       if (JSON.parse(jsondata) == null) {
-        jsondata = storingData
+        jsondata = []
+        jsondata.push(storingData)
       }else {
-        jsondata = [JSON.parse(jsondata),storingData]
+        jsondata = JSON.parse(jsondata)
+        jsondata.push(storingData)
       }
 
       await AsyncStorage.setItem("userCustomDrinks", JSON.stringify(jsondata))
@@ -66,16 +74,17 @@ export function AddDrink ({navigation}) {
   }
 
   useEffect(() => {
-      if (items[0] !== undefined && navigation.getState()["index"] === 0) {
+
+      if (route.params !== undefined) {
         let userCustomDrinks = (userImages === null) ? [] :[...userImages]
         const length = (userImages === null) ? 0 : userImages.length
-        userCustomDrinks.push([<Image source={items[0]} key={"images"+length} style={{height: 150, width: 150, resizeMode: "contain"}}/>])
-        userCustomDrinks.push(<Text key={"test"+length} style={styles.add_drink_picture_text}>{items[1]} ml</Text>)
+        userCustomDrinks.push([<Image source={route.params[0]} key={"images"+length} style={{height: 150, width: 150, resizeMode: "contain"}}/>])
+        userCustomDrinks.push(<Text key={"test"+length} style={styles.add_drink_picture_text}>{route.params[1]} ml</Text>)
 
         setUserImages(userCustomDrinks)
         storeUserImage()
       }
-  },[navigation.getState()])
+  },[route.params])
 
   return (
     <SafeAreaView style={styles.screen}>
@@ -85,7 +94,7 @@ export function AddDrink ({navigation}) {
           flex: 1, flexDirection: "row", justifyContent: "space-evenly",
           backgroundColor: "darkblue",
           borderBottomLeftRadius: 7.5, borderBottomRightRadius: 7.5}}>
-          <Text style={styles.add_drink_heading_pictures_text}>Water</Text>
+          <Text style={styles.add_drink_heading_pictures_text}>{t('Water')}</Text>
         </View>
         <View style={styles.add_drinks_picture_column}>
           {/*First row of drinks*/}
@@ -146,7 +155,7 @@ export function AddDrink ({navigation}) {
 
         {/*CUSTOM FROM HERE*/}
         <View style={styles.add_drink_heading_pictures}>
-          <Text style={styles.add_drink_heading_pictures_text}>Own</Text>
+          <Text style={styles.add_drink_heading_pictures_text}>{t('Own')}</Text>
         </View>
         <View style={{flex: 2, justifyContent: "center", alignItems: "center", marginBottom: 20}}>
           {(userImages !== null)
@@ -162,7 +171,7 @@ export function AddDrink ({navigation}) {
         <TouchableOpacity
           style={{backgroundColor: 'darkblue', alignItems: "center", padding: "3%", borderRadius: 10, marginBottom: 5}}
           onPress={()=>navigation.navigate("AddCustomDrink")}>
-          <Text style={styles.button_text}>Add Custom Drink</Text>
+          <Text style={styles.button_text}>{t('Add Custom Drink')}</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>
@@ -170,7 +179,7 @@ export function AddDrink ({navigation}) {
 }
 
 function AddCustomDrink({navigation}) {
-  const [itemsCustom, setItemsCustom] = useItems(); // <- using items context as global useState
+  const { t, i18n } = useTranslation();
   const [userImmage, setUserImmage] = React.useState(require("./assets/glass.png"))
   const [number,setNumber] = React.useState(null)
   const [showButton, setShowButton] = React.useState(false)
@@ -191,43 +200,37 @@ function AddCustomDrink({navigation}) {
     }
   }
 
-  React.useEffect(() => {
-    if (number !== null){
-      navigation.goBack(itemsCustom)
-    }
-  },[itemsCustom])
-
   return(
     <SafeAreaView style={{flex: 1, flexDirection: "column", backgroundColor: "lightblue", justifyContent: "center", alignItems: "center"}}>
-      <Text style={{fontWeight: "900", fontSize: 40, color: "blue", textAlign: "center"}}>Your Drink</Text>
+      <Text style={{fontWeight: "900", fontSize: 40, color: "blue", textAlign: "center"}}>{t('Your Drink')}</Text>
       <View style={{flex: 2, flexDirection: "column", justifyContent: "center", alignItems: "center", paddingBottom: "25%"}}>
-        <Text style={{color: "black", fontSize: 25, marginBottom: "5%", fontWeight: "500"}}>Photo</Text>
+        <Text style={{color: "black", fontSize: 25, marginBottom: "5%", fontWeight: "500"}}>{t('Image')}</Text>
         <Image source={userImmage} style={{width: 100, height: 100, resizeMode: "center", borderWidth: 2, borderColor: "black", marginBottom: "5%", backgroundColor: "white"}}/>
-        <Text style={{color: "black", fontSize: 25, marginBottom: "5%", fontWeight: "500"}}>Amounth</Text>
+        <Text style={{color: "black", fontSize: 25, marginBottom: "5%", fontWeight: "500"}}>{t('Amounth')}</Text>
         <TextInput
           style = {{borderWidth: 2, width: 200, color: "black", fontSize: 15, fontWeight: "500", paddingLeft: 10, backgroundColor: "white"}}
           onChangeText={setNumber}
           placeholderTextColor={"black"}
           value={number}
-          placeholder="Insert the drink amounth"
+          placeholder={t('Insert the drink amounth')}
           keyboardType="numeric"
         />
       </View>
 
-      {/*BUTTONS AREA*/}
+      {/*BUTTON AREA*/ }
       {(userImmage !== require("./assets/glass.png") && number !== null) ?
         <View style={{alignItems: "center", position: "absolute", width: "100%", bottom: "10%"}}>
-          <TouchableOpacity style={styles.button} onPress={() => setItemsCustom([userImmage, number])}>
-            <Text style={styles.button_text}>Add Drink</Text>
+          <TouchableOpacity style={styles.button} onPress={() => navigation.navigate("AddDrink",[userImmage, number])}>
+            <Text style={styles.button_text}>{t('Add Drink')}</Text>
           </TouchableOpacity>
         </View>
         : null}
       <View style={{flexDirection: "row", justifyContent: "space-evenly", alignItems: "center", position: "absolute", bottom: 0, width: "100%", marginBottom: "2%"}}>
         <TouchableOpacity style={styles.button} onPress={()=>userPicture("camera")}>
-          <Text style={styles.button_text}>Take Picture</Text>
+          <Text style={styles.button_text}>{t('Take Picture')}</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.button} onPress={()=>userPicture("galerry")}>
-          <Text style={styles.button_text}>Load from Gallery</Text>
+          <Text style={styles.button_text}>{t('Load from Gallery')}</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>
@@ -236,14 +239,12 @@ function AddCustomDrink({navigation}) {
 
 const Drawer = createNativeStackNavigator();
 
-export function AddDrinksPart({navigation}) {
+export function AddDrinksPart({route, navigation}) {
   return (
-    <ItemsProvider>
-      <Drawer.Navigator screenOptions={{ headerShown: false }} initialRouteName="Informatika1">
+      <Drawer.Navigator screenOptions={{ headerShown: false }} initialRouteName="AddDrink">
         <Drawer.Screen name="AddDrink" component={AddDrink} />
         <Drawer.Screen name="AddCustomDrink" component={AddCustomDrink} />
       </Drawer.Navigator>
-    </ItemsProvider>
   );
 }
 
@@ -310,41 +311,4 @@ const styles = StyleSheet.create({
 });
 
 
-
-/*export function Add({ route, navigation }) {
-  const [items, setItems] = useItems(); // <- using items context as global useState
-  const [itemName, setItemName] = React.useState('');
-  const [itemPrice, setItemPrice] = React.useState('0');
-
-  const addItem = () => {
-    setItems([...items, { itemName, itemPrice }]);
-    setItemName('');
-    setItemPrice('0');
-  };
-
-  return (
-    <View>
-      <TextInput
-        multiline
-        placeholder="What's on your mind?"
-        value={itemName}
-        onChangeText={setItemName}
-      />
-      <TextInput
-        multiline
-        placeholder="What's on your mind?"
-        value={itemPrice}
-        onChangeText={setItemPrice}
-      />
-      <Button
-        title="Done"
-        onPress={() => {
-          addItem();
-          // Pass params back to home screen
-          navigation.navigate('Home', items);
-        }}
-      />
-    </View>
-  );
-}*/
 
