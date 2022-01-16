@@ -24,6 +24,7 @@ export function AddDrink ({route, navigation}) {
   const [items, setItems] = useItems(); // <- using items context as global useState
   const [firstPicture, setFirstPicture] = React.useState("");
   const [amounth, setAmounth] = React.useState(0);
+  const [percentage, setPercatange] = React.useState(0.0)
   const [userImages, setUserImages] = React.useState(null)
 
   const [showWater,setShowWater] = React.useState(false)
@@ -33,11 +34,11 @@ export function AddDrink ({route, navigation}) {
   const [showCustom,setShowCustom] = React.useState(false)
 
   useEffect(function(){
-    if(amounth != 0) {
-      setItems([{firstPicture, amounth}]);
+    if(percentage !== 0.0) {
+      setItems([{firstPicture, amounth, percentage}]);
       navigation.navigate('Home', items);
     }
-  },[amounth]);
+  },[percentage]);
 
 
   useEffect(() => {
@@ -48,9 +49,9 @@ export function AddDrink ({route, navigation}) {
           jsondata = JSON.parse(jsondata)
           let ownDrinksData = []
           for (let i in jsondata) {
-            ownDrinksData.push([<Pressable key={'pressable'+i} onPress={() => {setFirstPicture({uri: jsondata[i][0]}), setAmounth(parseInt(jsondata[i][1]))}}>
+            ownDrinksData.push([<Pressable key={'pressable'+i} onPress={() => {setFirstPicture({uri: jsondata[i][0]}); setAmounth(parseInt(jsondata[i][1])); setPercatange(parseFloat(jsondata[i][2]/100))}}>
               <Image source={{ uri: jsondata[i][0] }} key={"images" + i} style={{ height: 150, width: 150, resizeMode: "contain", borderColor: "darkblue", borderWidth: 3}} />
-              <Text key={"text" + i} style={styles.add_drink_picture_text}>{jsondata[i][1]} ml</Text>
+              <Text key={"text" + i} style={styles.add_drink_picture_text}>{jsondata[i][1]} ml - {jsondata[i][2]}%</Text>
             </Pressable>])
           }
           setUserImages(ownDrinksData)
@@ -64,7 +65,7 @@ export function AddDrink ({route, navigation}) {
 
   async function storeUserImage() {
     try {
-      let storingData = [route.params[0]["uri"],route.params[1]]
+      let storingData = [route.params[0]["uri"],route.params[1],route.params[2]]
       let jsondata = await AsyncStorage.getItem("userCustomDrinks");
       if (JSON.parse(jsondata) == null) {
         jsondata = []
@@ -86,9 +87,9 @@ export function AddDrink ({route, navigation}) {
         let userCustomDrinks = (userImages === null) ? [] :[...userImages]
         const length = (userImages === null) ? 0 : userImages.length
 
-        userCustomDrinks.push([<Pressable key={'Pressable'+length} onPress={() => {setFirstPicture(route.params[0]), setAmounth(parseInt(route.params[1]))}}>
+        userCustomDrinks.push([<Pressable key={'Pressable'+length} onPress={() => {setFirstPicture(route.params[0]); setAmounth(parseInt(route.params[1])); setPercatange(parseFloat(route.params[2]/100))}}>
           <Image source={route.params[0]} key={"Images"+length} style={{height: 150, width: 150, resizeMode: "contain",borderWidth: 3, borderColor: "darkblue"}}/>
-          <Text key={"Text"+length} style={styles.add_drink_picture_text}>{route.params[1]} ml</Text>
+          <Text key={"Amounth"+length} style={styles.add_drink_picture_text}>{route.params[1]} ml - {route.params[2]}%</Text>
         </Pressable>])
 
         setUserImages(userCustomDrinks)
@@ -105,7 +106,7 @@ export function AddDrink ({route, navigation}) {
         <Pressable style={{flex: 1, flexDirection: "row",
           backgroundColor: "darkblue",
           borderBottomLeftRadius: 7.5, borderBottomRightRadius: 7.5, alignItems: "center", justifyContent: "center", marginBottom: 15}} onPress={() => setShowWater(!showWater)}>
-          <Text style={styles.add_drink_heading_pictures_text}>{t('Water')}</Text>
+          <Text style={styles.add_drink_heading_pictures_text}>{t('Water')} - 100%</Text>
         </Pressable>
 
         {(!showWater) ? null :
@@ -114,7 +115,7 @@ export function AddDrink ({route, navigation}) {
             <View style={styles.add_drink_picture_row}>
               <View style={styles.add_drink_picture_item}>
                 <Pressable style={styles.add_drink_picture_pressable} onPress={() => {
-                  setFirstPicture("1"), setAmounth(100)
+                  setFirstPicture("1"); setAmounth(100); setPercatange(1)
                 }}>
                   <Image source={require("./assets/drinks/water/cup_blue.png")} style={styles.image} />
                 </Pressable>
@@ -123,7 +124,7 @@ export function AddDrink ({route, navigation}) {
 
               <View style={styles.add_drink_picture_item}>
                 <Pressable style={styles.add_drink_picture_pressable} onPress={() => {
-                  setFirstPicture("2"), setAmounth(150)
+                  setFirstPicture("2"); setAmounth(150); setPercatange(1)
                 }}>
                   <Image source={require("./assets/drinks/water/glass_blue.png")} style={styles.image} />
                 </Pressable>
@@ -132,7 +133,7 @@ export function AddDrink ({route, navigation}) {
 
               <View style={styles.add_drink_picture_item}>
                 <Pressable style={styles.add_drink_picture_pressable} onPress={() => {
-                  setFirstPicture("2"), setAmounth(300)
+                  setFirstPicture("2"); setAmounth(300); setPercatange(1)
                 }}>
                   <Image source={require("./assets/drinks/water/glass_blue.png")} style={styles.image} />
                 </Pressable>
@@ -141,7 +142,7 @@ export function AddDrink ({route, navigation}) {
 
               <View style={styles.add_drink_picture_item}>
                 <Pressable style={styles.add_drink_picture_pressable} onPress={() => {
-                  setFirstPicture("3"), setAmounth(500)
+                  setFirstPicture("3"); setAmounth(500); setPercatange(1)
                 }}>
                   <Image source={require("./assets/drinks/water/big_glass_blue.png")} style={styles.image} />
                 </Pressable>
@@ -153,7 +154,7 @@ export function AddDrink ({route, navigation}) {
             <View style={styles.add_drink_picture_row}>
               <View style={styles.add_drink_picture_item}>
                 <Pressable style={styles.add_drink_picture_pressable} onPress={() => {
-                  setFirstPicture("3"), setAmounth(750)
+                  setFirstPicture("3"); setAmounth(750); setPercatange(1)
                 }}>
                   <Image source={require("./assets/drinks/water/big_glass_blue.png")} style={styles.image} />
                 </Pressable>
@@ -162,7 +163,7 @@ export function AddDrink ({route, navigation}) {
 
               <View style={styles.add_drink_picture_item}>
                 <Pressable style={styles.add_drink_picture_pressable} onPress={() => {
-                  setFirstPicture("4"), setAmounth(1500)
+                  setFirstPicture("4"); setAmounth(1500); setPercatange(1)
                 }}>
                   <Image source={require("./assets/drinks/water/bottle_blue.png")} style={styles.image} />
                 </Pressable>
@@ -171,7 +172,7 @@ export function AddDrink ({route, navigation}) {
 
               <View style={styles.add_drink_picture_item}>
                 <Pressable style={styles.add_drink_picture_pressable} onPress={() => {
-                  setFirstPicture("4"), setAmounth(2000)
+                  setFirstPicture("4"); setAmounth(2000); setPercatange(1)
                 }}>
                   <Image source={require("./assets/drinks/water/bottle_blue.png")} style={styles.image} />
                 </Pressable>
@@ -183,7 +184,7 @@ export function AddDrink ({route, navigation}) {
 
         {/*JUICE*/}
         <Pressable style={styles.add_drink_heading_pictures} onPress={() => setShowJuice(!showJuice)}>
-          <Text style={styles.add_drink_heading_pictures_text}>{t('Juice')}</Text>
+          <Text style={styles.add_drink_heading_pictures_text}>{t('Juice')} - 90%</Text>
         </Pressable>
 
         {(!showJuice) ? null :
@@ -192,7 +193,7 @@ export function AddDrink ({route, navigation}) {
             <View style={styles.add_drink_picture_row}>
               <View style={styles.add_drink_picture_item}>
                 <Pressable style={styles.add_drink_picture_pressable} onPress={() => {
-                  setFirstPicture("5"), setAmounth(200)
+                  setFirstPicture("5"); setAmounth(200); setPercatange(0.9)
                 }}>
                   <Image source={require("./assets/drinks/juice/glass_orange.png")} style={styles.image} />
                 </Pressable>
@@ -201,7 +202,7 @@ export function AddDrink ({route, navigation}) {
 
               <View style={styles.add_drink_picture_item}>
                 <Pressable style={styles.add_drink_picture_pressable} onPress={() => {
-                  setFirstPicture("5"), setAmounth(250)
+                  setFirstPicture("5"); setAmounth(250); setPercatange(0.9)
                 }}>
                   <Image source={require("./assets/drinks/juice/glass_orange.png")} style={styles.image} />
                 </Pressable>
@@ -210,7 +211,7 @@ export function AddDrink ({route, navigation}) {
 
               <View style={styles.add_drink_picture_item}>
                 <Pressable style={styles.add_drink_picture_pressable} onPress={() => {
-                  setFirstPicture("6"), setAmounth(1000)
+                  setFirstPicture("6"); setAmounth(1000); setPercatange(0.9)
                 }}>
                   <Image source={require("./assets/drinks/juice/bottle_orange.png")} style={styles.image} />
                 </Pressable>
@@ -219,7 +220,7 @@ export function AddDrink ({route, navigation}) {
 
               <View style={styles.add_drink_picture_item}>
                 <Pressable style={styles.add_drink_picture_pressable} onPress={() => {
-                  setFirstPicture("6"), setAmounth(2000)
+                  setFirstPicture("6"); setAmounth(2000); setPercatange(0.9)
                 }}>
                   <Image source={require("./assets/drinks/juice/bottle_orange.png")} style={styles.image} />
                 </Pressable>
@@ -231,7 +232,7 @@ export function AddDrink ({route, navigation}) {
 
         {/*MILK*/}
         <Pressable style={styles.add_drink_heading_pictures} onPress={() => setShowMilk(!showMilk)}>
-          <Text style={styles.add_drink_heading_pictures_text}>{t('Milk')}</Text>
+          <Text style={styles.add_drink_heading_pictures_text}>{t('Milk')} - 100%</Text>
         </Pressable>
 
         {(!showMilk) ? null :
@@ -240,7 +241,7 @@ export function AddDrink ({route, navigation}) {
             <View style={styles.add_drink_picture_row}>
               <View style={styles.add_drink_picture_item}>
                 <Pressable style={styles.add_drink_picture_pressable} onPress={() => {
-                  setFirstPicture("7"), setAmounth(200)
+                  setFirstPicture("7"); setAmounth(200); setPercatange(1)
                 }}>
                   <Image source={require("./assets/drinks/milk/glass_white.png")} style={styles.image} />
                 </Pressable>
@@ -249,7 +250,7 @@ export function AddDrink ({route, navigation}) {
 
               <View style={styles.add_drink_picture_item}>
                 <Pressable style={styles.add_drink_picture_pressable} onPress={() => {
-                  setFirstPicture("7"), setAmounth(300)
+                  setFirstPicture("7"); setAmounth(300); setPercatange(1)
                 }}>
                   <Image source={require("./assets/drinks/milk/glass_white.png")} style={styles.image} />
                 </Pressable>
@@ -258,7 +259,7 @@ export function AddDrink ({route, navigation}) {
 
                 <View style={styles.add_drink_picture_item}>
                   <Pressable style={styles.add_drink_picture_pressable} onPress={() => {
-                    setFirstPicture("8"), setAmounth(500)
+                    setFirstPicture("8"); setAmounth(500); setPercatange(1)
                   }}>
                     <Image source={require("./assets/drinks/milk/big_glass_white.png")} style={styles.image} />
                   </Pressable>
@@ -270,7 +271,7 @@ export function AddDrink ({route, navigation}) {
 
         {/*COFFEE*/}
         <Pressable style={styles.add_drink_heading_pictures} onPress={() => setShowCoffee(!showCoffee)}>
-          <Text style={styles.add_drink_heading_pictures_text}>{t('Coffee')}</Text>
+          <Text style={styles.add_drink_heading_pictures_text}>{t('Coffee')} - 80%</Text>
         </Pressable>
 
         {(!showCoffee) ? null :
@@ -279,7 +280,7 @@ export function AddDrink ({route, navigation}) {
             <View style={styles.add_drink_picture_row}>
               <View style={styles.add_drink_picture_item}>
                 <Pressable style={styles.add_drink_picture_pressable} onPress={() => {
-                  setFirstPicture("9"), setAmounth(100)
+                  setFirstPicture("9"); setAmounth(100); setPercatange(0.8)
                 }}>
                   <Image source={require("./assets/drinks/coffee/cup_brown.png")} style={styles.image} />
                 </Pressable>
@@ -288,7 +289,7 @@ export function AddDrink ({route, navigation}) {
 
               <View style={styles.add_drink_picture_item}>
                 <Pressable style={styles.add_drink_picture_pressable} onPress={() => {
-                  setFirstPicture("9"), setAmounth(150)
+                  setFirstPicture("9"); setAmounth(150); setPercatange(0.8)
                 }}>
                   <Image source={require("./assets/drinks/coffee/cup_brown.png")} style={styles.image} />
                 </Pressable>
@@ -297,7 +298,7 @@ export function AddDrink ({route, navigation}) {
 
               <View style={styles.add_drink_picture_item}>
                 <Pressable style={styles.add_drink_picture_pressable} onPress={() => {
-                  setFirstPicture("10"), setAmounth(300)
+                  setFirstPicture("a"); setAmounth(200); setPercatange(0.8)
                 }}>
                   <Image source={require("./assets/drinks/coffee/glass_brown.png")} style={styles.image} />
                 </Pressable>
@@ -306,7 +307,7 @@ export function AddDrink ({route, navigation}) {
 
               <View style={styles.add_drink_picture_item}>
                 <Pressable style={styles.add_drink_picture_pressable} onPress={() => {
-                  setFirstPicture("11"), setAmounth(1000)
+                  setFirstPicture("b"); setAmounth(1000); setPercatange(0.8)
                 }}>
                   <Image source={require("./assets/drinks/coffee/custom_brown.png")} style={styles.image} />
                 </Pressable>
@@ -345,6 +346,7 @@ function AddCustomDrink({navigation}) {
   const { t, i18n } = useTranslation();
   const [userImmage, setUserImmage] = React.useState(require("./assets/empty/glass.png"))
   const [number,setNumber] = React.useState(null)
+  const [percentage,setPercentage] = React.useState(null)
   const [showButton, setShowButton] = React.useState(false)
 
   const userPicture = async(using) => {
@@ -356,7 +358,7 @@ function AddCustomDrink({navigation}) {
       permisionscamer = await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.CAMERA)
 
       if (using === "camera") {
-        result = await launchCamera({ saveToPhotos: true }).catch((e) => {
+        result = await launchCamera().catch((e) => {
           console.log(e)
         })
       } else {
@@ -375,25 +377,37 @@ function AddCustomDrink({navigation}) {
 
   return(
     <SafeAreaView style={{flex: 1, flexDirection: "column", backgroundColor: "lightblue", justifyContent: "center", alignItems: "center"}}>
-      <Text style={{fontWeight: "900", fontSize: 40, color: "blue", textAlign: "center"}}>{t('Your Drink')}</Text>
+      <Text style={{fontWeight: "900", fontSize: 40, color: "white", textAlign: "center", backgroundColor: "darkblue", width: "100%", borderBottomLeftRadius: 10, borderBottomRightRadius: 10, paddingBottom: "2%"}}>
+        {t('Your Drink')}</Text>
+
       <View style={{flex: 2, flexDirection: "column", justifyContent: "center", alignItems: "center", paddingBottom: "25%"}}>
         <Text style={{color: "black", fontSize: 25, marginBottom: "5%", fontWeight: "500"}}>{t('Image')}</Text>
         <Image source={userImmage} style={{width: 100, height: 100, resizeMode: "center", borderWidth: 2, borderColor: "black", marginBottom: "5%", backgroundColor: "white"}}/>
         <Text style={{color: "black", fontSize: 25, marginBottom: "5%", fontWeight: "500"}}>{t('Amounth')}</Text>
         <TextInput
-          style = {{borderWidth: 2, width: 200, color: "black", fontSize: 15, fontWeight: "500", paddingLeft: 10, backgroundColor: "white"}}
+          style = {{borderWidth: 2, width: 220, color: "black", fontSize: 15, fontWeight: "500", backgroundColor: "white", textAlign: "center"}}
           onChangeText={setNumber}
           placeholderTextColor={"grey"}
           value={number}
-          placeholder={t('Insert the drink amounth')}
+          placeholder={t('Drink amounth')}
+          keyboardType="numeric"
+        />
+
+        <Text style={{color: "black", fontSize: 25, marginBottom: "5%", marginTop: "5%", fontWeight: "500"}}>{t('Percentage')}</Text>
+        <TextInput
+          style = {{borderWidth: 2, width: 220, color: "black", fontSize: 15, fontWeight: "500", backgroundColor: "white", textAlign: "center"}}
+          onChangeText={setPercentage}
+          placeholderTextColor={"grey"}
+          value={percentage}
+          placeholder={t('Percentage of water in drink')}
           keyboardType="numeric"
         />
       </View>
 
       {/*BUTTON AREA*/ }
-      {(userImmage !== require("./assets/empty/glass.png") && number !== null) ?
+      {(userImmage !== require("./assets/empty/glass.png") && number !== null && percentage !== null) ?
         <View style={{alignItems: "center", position: "absolute", width: "100%", bottom: "10%"}}>
-          <TouchableOpacity style={styles.button} onPress={() => navigation.navigate("AddDrink",[userImmage, number])}>
+          <TouchableOpacity style={styles.button} onPress={() => navigation.navigate("AddDrink",[userImmage, number, percentage])}>
             <Text style={styles.button_text}>{t('Add Drink')}</Text>
           </TouchableOpacity>
         </View>

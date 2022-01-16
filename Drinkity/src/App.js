@@ -24,10 +24,10 @@ function Home ({route, navigation}){
   const [mainPicture, setMainPicture] = React.useState(require("./assets/mainpicture/level0.png"));
   const [items, setItems] = useItems();
   const [drinks, setDrinks] = React.useState([
-    ["1", 100],
-    ["2", 150],
-    ["3", 500],
-    ["4", 2000]
+    ["1", 100, 1],
+    ["2", 150, 1],
+    ["3", 500, 1],
+    ["4", 2000, 1]
     ]);
   const [usageDrinks, setUsageDrinks] = React.useState([0,0,0,0])
   const [suggestedWater, setSuggestedWater] = React.useState(0)
@@ -45,8 +45,8 @@ function Home ({route, navigation}){
     "7": require("./assets/drinks/milk/glass_white.png"),
     "8": require("./assets/drinks/milk/big_glass_white.png"),
     "9": require("./assets/drinks/coffee/cup_brown.png"),
-    "10": require("./assets/drinks/coffee/glass_brown.png"),
-    "11": require("./assets/drinks/coffee/custom_brown.png"),
+    "a": require("./assets/drinks/coffee/glass_brown.png"),
+    "b": require("./assets/drinks/coffee/custom_brown.png"),
   }
 
   async function removeItemm(key){
@@ -113,6 +113,7 @@ function Home ({route, navigation}){
   },[items])
 
 
+
   async function loadData(key) {
     try{
       const jsondata =  await AsyncStorage.getItem(key);
@@ -172,9 +173,8 @@ function Home ({route, navigation}){
         allDrinks[i + 1] = allDrinks[i]
         usages[i + 1] = usages[i]
       }
-      allDrinks[0] = [items[0]["firstPicture"], items[0]["amounth"]]
+      allDrinks[0] = [items[0]["firstPicture"], items[0]["amounth"], items[0]["percentage"]]
       usages[0] = maxusage + 1
-
       //stop overusing
       if (Math.min(...usages) >= 10) {
         for (let i = 0; i < 4; i++) {
@@ -273,12 +273,13 @@ function Home ({route, navigation}){
     }
   }
 
-  const drink = (waterDrinked) => {
-    storeData(currDate, water+waterDrinked)
-    let percentage = (water+waterDrinked)/suggestedWater*100;
-    setWater(water+waterDrinked);
+  const drink = (waterDrinked, percentage) => {
+    const newWater = water+(waterDrinked*percentage)
+    storeData(currDate, newWater)
+    let percentageOfWhole = (newWater)/suggestedWater*100;
+    setWater(newWater);
 
-    updateMainPicture(percentage)
+    updateMainPicture(percentageOfWhole)
   }
 
   return(
@@ -323,25 +324,25 @@ function Home ({route, navigation}){
         <Pressable style={{flex: 1}} onPress={() => navigation.navigate('AddDrinksPart')}>
           <Image source={require("./assets/add_drink.png")} style={styles.image}/>
         </Pressable>
-        <Pressable style={{flex: 1, flexDirection: "column"}} onPress={() => {drink(drinks[0][1]), changeUsage(0)}}>
+        <Pressable style={{flex: 1, flexDirection: "column"}} onPress={() => {drink(drinks[0][1], drinks[0][2]); changeUsage(0)}}>
           {(drinks[0][0].length === 1) ?  <Image source={pictures[drinks[0][0]]} style={styles.image}/>
             : <Image source={drinks[0][0]} style={styles.image_custom}/>
           }
           <Text style={styles.pictures_description}>{drinks[0][1]} ml</Text>
         </Pressable>
-        <Pressable style={{flex: 1}} onPress={() => {drink(drinks[1][1]), changeUsage(1)}}>
+        <Pressable style={{flex: 1}} onPress={() => {drink(drinks[1][1], drinks[1][2]); changeUsage(1)}}>
           {(drinks[1][0].length === 1) ?  <Image source={pictures[drinks[1][0]]} style={styles.image}/>
             : <Image source={drinks[1][0]} style={styles.image_custom}/>
           }
           <Text style={styles.pictures_description}>{drinks[1][1]} ml</Text>
         </Pressable>
-        <Pressable style={{flex: 1}} onPress={() => {drink(drinks[2][1]), changeUsage(2)}}>
+        <Pressable style={{flex: 1}} onPress={() => {drink(drinks[2][1], drinks[2][2]); changeUsage(2)}}>
           {(drinks[2][0].length === 1) ?  <Image source={pictures[drinks[2][0]]} style={styles.image}/>
             : <Image source={drinks[2][0]} style={styles.image_custom}/>
           }
           <Text style={styles.pictures_description}>{drinks[2][1]} ml</Text>
         </Pressable>
-        <Pressable style={{flex: 1}} onPress={() => {drink(drinks[3][1]), changeUsage(3)}}>
+        <Pressable style={{flex: 1}} onPress={() => {drink(drinks[3][1], drinks[3][2]); changeUsage(3)}}>
           {(drinks[3][0].length === 1) ?  <Image source={pictures[drinks[3][0]]} style={styles.image}/>
             : <Image source={drinks[3][0]} style={styles.image_custom}/>
           }
