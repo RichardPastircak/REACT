@@ -36,10 +36,17 @@ function Home ({route, navigation}){
 
   const [firstTime,setFirstTime] = React.useState(true);
   const pictures = {
-    "1": require("./assets/drinks_water/cup_blue.png"),
-    "2": require("./assets/drinks_water/glass_blue.png"),
-    "3": require("./assets/drinks_water/big_glass_blue.png"),
-    "4": require("./assets/drinks_water/bottle_blue.png"),
+    "1": require("./assets/drinks/water/cup_blue.png"),
+    "2": require("./assets/drinks/water/glass_blue.png"),
+    "3": require("./assets/drinks/water/big_glass_blue.png"),
+    "4": require("./assets/drinks/water/bottle_blue.png"),
+    "5": require("./assets/drinks/juice/glass_orange.png"),
+    "6": require("./assets/drinks/juice/bottle_orange.png"),
+    "7": require("./assets/drinks/milk/glass_white.png"),
+    "8": require("./assets/drinks/milk/big_glass_white.png"),
+    "9": require("./assets/drinks/coffee/cup_brown.png"),
+    "10": require("./assets/drinks/coffee/glass_brown.png"),
+    "11": require("./assets/drinks/coffee/custom_brown.png"),
   }
 
   async function removeItemm(key){
@@ -60,12 +67,13 @@ function Home ({route, navigation}){
         updateMainPicture(water/suggestedWater*100)
         setWater(water)
       }
-      else{drink(0)}
+      else{drink(0); updateMainPicture(0)}
     })
-  },[])
+  },[suggestedWater])
 
   React.useEffect(() => {
     async function checkNewUser() {
+      //removeItemm("waterAmounth")
       try {
         const value = await AsyncStorage.getItem('waterAmounth')
         if(value == null) {
@@ -126,35 +134,35 @@ function Home ({route, navigation}){
     let usages = [...usageDrinks]
     let allDrinks = [...drinks]
     let maxusage = Math.max(...usages)
-
     let test = false
+    let position
+
     for (let i = 0; i < 3; i++) {
-      if (allDrinks[i][1] === items[0]["amounth"] && allDrinks[i][0] === items[0]["firstPicture"]) {
+      if (allDrinks[i][1] === items[0]["amounth"] && (allDrinks[i][0] === items[0]["firstPicture"] || (typeof allDrinks[i][0] === "object" && allDrinks[i][0]["uri"] === items[0]["firstPicture"]["uri"]))) {
         test = true
+        position = i
         break
       }
     }
 
     if (test) {
-      let position
-      for (let i = 0; i < 4; i++){
-        if(allDrinks[i][0] === items[0]["firstPicture"] && allDrinks[i][1] === items[0]["amounth"]){
-          position = i;
-          if(position === 0) return
-          break
-        }
-      }
+      if(position === 0) return
 
       let tmp = Math.max(...usages)
       let tmp1 = allDrinks[position]
 
-      for (let i = 2; i >= 0; i--){
-        if(i !== position){
-          usages[i+1] = usages[i]
-          allDrinks[i+1] = allDrinks[i]
+      if (position === 1){
+        usages[position] = usages[0]
+        allDrinks[position] = allDrinks[0]
+      }else {
+        for (let i = 2; i >= 0; i--) {
+          if (i !== position) {
+            usages[i + 1] = usages[i]
+            allDrinks[i + 1] = allDrinks[i]
+          }
         }
       }
-      usages[0] = tmp+1
+      usages[0] = tmp + 1
       allDrinks[0] = tmp1
       //console.log(usages)
     }
@@ -178,7 +186,6 @@ function Home ({route, navigation}){
     //set new values
     setUsageDrinks(usages)
     setDrinks(allDrinks)
-
   }
 
   const changeUsage = (drinkPosition) => {
@@ -279,6 +286,7 @@ function Home ({route, navigation}){
       <View style={{ flex: 0.77, borderBottomWidth: 6, borderBottomColor: "darkblue"}}>
         <CalendarStrip
           scrollable
+          selectedDate={new Date()}
           style={{height: 68, paddingTop: 5, paddingBottom: 5}}
           calendarColor={'#1aa8ad'}
           calendarHeaderStyle={{color: 'black', fontSize: 15}}
@@ -294,6 +302,7 @@ function Home ({route, navigation}){
               if(data != null){
                 setWater(data)
               }else {setWater(0)}
+              updateMainPicture(data/suggestedWater*100)
             })
           }}
         />
@@ -315,19 +324,27 @@ function Home ({route, navigation}){
           <Image source={require("./assets/add_drink.png")} style={styles.image}/>
         </Pressable>
         <Pressable style={{flex: 1, flexDirection: "column"}} onPress={() => {drink(drinks[0][1]), changeUsage(0)}}>
-          <Image source={pictures[drinks[0][0]]} style={styles.image}/>
+          {(drinks[0][0].length === 1) ?  <Image source={pictures[drinks[0][0]]} style={styles.image}/>
+            : <Image source={drinks[0][0]} style={styles.image_custom}/>
+          }
           <Text style={styles.pictures_description}>{drinks[0][1]} ml</Text>
         </Pressable>
         <Pressable style={{flex: 1}} onPress={() => {drink(drinks[1][1]), changeUsage(1)}}>
-          <Image source={pictures[drinks[1][0]]} style={styles.image}/>
+          {(drinks[1][0].length === 1) ?  <Image source={pictures[drinks[1][0]]} style={styles.image}/>
+            : <Image source={drinks[1][0]} style={styles.image_custom}/>
+          }
           <Text style={styles.pictures_description}>{drinks[1][1]} ml</Text>
         </Pressable>
         <Pressable style={{flex: 1}} onPress={() => {drink(drinks[2][1]), changeUsage(2)}}>
-          <Image source={pictures[drinks[2][0]]} style={styles.image}/>
+          {(drinks[2][0].length === 1) ?  <Image source={pictures[drinks[2][0]]} style={styles.image}/>
+            : <Image source={drinks[2][0]} style={styles.image_custom}/>
+          }
           <Text style={styles.pictures_description}>{drinks[2][1]} ml</Text>
         </Pressable>
         <Pressable style={{flex: 1}} onPress={() => {drink(drinks[3][1]), changeUsage(3)}}>
-          <Image source={pictures[drinks[3][0]]} style={styles.image}/>
+          {(drinks[3][0].length === 1) ?  <Image source={pictures[drinks[3][0]]} style={styles.image}/>
+            : <Image source={drinks[3][0]} style={styles.image_custom}/>
+          }
           <Text style={styles.pictures_description}>{drinks[3][1]} ml</Text>
         </Pressable>
 
@@ -431,6 +448,16 @@ const styles = StyleSheet.create({
     width: null,
     height: null,
     resizeMode: 'contain'
+  },
+  image_custom: {
+    flex: 1,
+    width: null,
+    height: null,
+    resizeMode: 'contain',
+    borderColor: "darkblue",
+    borderWidth: 2,
+    marginRight: "5%",
+    marginLeft: "5%",
   },
   main_cogwheel: {
     flex: 0.25,

@@ -9,7 +9,7 @@ import {
   Image,
   StyleSheet,
   ScrollView,
-  TouchableOpacity,
+  TouchableOpacity, Platform, PermissionsAndroid,
 } from "react-native";
 import {useItems} from './reduxstuff';
 import { ItemsProvider} from "./reduxstuff.js";
@@ -26,6 +26,12 @@ export function AddDrink ({route, navigation}) {
   const [amounth, setAmounth] = React.useState(0);
   const [userImages, setUserImages] = React.useState(null)
 
+  const [showWater,setShowWater] = React.useState(false)
+  const [showJuice,setShowJuice] = React.useState(false)
+  const [showMilk,setShowMilk] = React.useState(false)
+  const [showCoffee,setShowCoffee] = React.useState(false)
+  const [showCustom,setShowCustom] = React.useState(false)
+
   useEffect(function(){
     if(amounth != 0) {
       setItems([{firstPicture, amounth}]);
@@ -37,14 +43,15 @@ export function AddDrink ({route, navigation}) {
   useEffect(() => {
     async function loadData() {
       try {
-        //await AsyncStorage.removeItem("userCustomDrinks")//
+        //await AsyncStorage.removeItem("userCustomDrinks")
         let jsondata = await AsyncStorage.getItem("userCustomDrinks");
           jsondata = JSON.parse(jsondata)
           let ownDrinksData = []
           for (let i in jsondata) {
-            ownDrinksData.push([<Image source={{ uri: jsondata[i][0] }} key={"images" + i}
-                                       style={{ height: 150, width: 150, resizeMode: "contain" }} />])
-            ownDrinksData.push(<Text key={"test" + i} style={styles.add_drink_picture_text}>{jsondata[i][1]} ml</Text>)
+            ownDrinksData.push([<Pressable key={'pressable'+i} onPress={() => {setFirstPicture({uri: jsondata[i][0]}), setAmounth(parseInt(jsondata[i][1]))}}>
+              <Image source={{ uri: jsondata[i][0] }} key={"images" + i} style={{ height: 150, width: 150, resizeMode: "contain", borderColor: "darkblue", borderWidth: 3}} />
+              <Text key={"text" + i} style={styles.add_drink_picture_text}>{jsondata[i][1]} ml</Text>
+            </Pressable>])
           }
           setUserImages(ownDrinksData)
 
@@ -78,10 +85,14 @@ export function AddDrink ({route, navigation}) {
       if (route.params !== undefined) {
         let userCustomDrinks = (userImages === null) ? [] :[...userImages]
         const length = (userImages === null) ? 0 : userImages.length
-        userCustomDrinks.push([<Image source={route.params[0]} key={"images"+length} style={{height: 150, width: 150, resizeMode: "contain"}}/>])
-        userCustomDrinks.push(<Text key={"test"+length} style={styles.add_drink_picture_text}>{route.params[1]} ml</Text>)
+
+        userCustomDrinks.push([<Pressable key={'Pressable'+length} onPress={() => {setFirstPicture(route.params[0]), setAmounth(parseInt(route.params[1]))}}>
+          <Image source={route.params[0]} key={"Images"+length} style={{height: 150, width: 150, resizeMode: "contain",borderWidth: 3, borderColor: "darkblue"}}/>
+          <Text key={"Text"+length} style={styles.add_drink_picture_text}>{route.params[1]} ml</Text>
+        </Pressable>])
 
         setUserImages(userCustomDrinks)
+        setShowCustom(true)
         storeUserImage()
       }
   },[route.params])
@@ -90,75 +101,227 @@ export function AddDrink ({route, navigation}) {
     <SafeAreaView style={styles.screen}>
       <ScrollView style={styles.screen}>
 
-        <View style={{
-          flex: 1, flexDirection: "row", justifyContent: "space-evenly",
+        {/*WATER*/}
+        <Pressable style={{flex: 1, flexDirection: "row",
           backgroundColor: "darkblue",
-          borderBottomLeftRadius: 7.5, borderBottomRightRadius: 7.5}}>
+          borderBottomLeftRadius: 7.5, borderBottomRightRadius: 7.5, alignItems: "center", justifyContent: "center", marginBottom: 15}} onPress={() => setShowWater(!showWater)}>
           <Text style={styles.add_drink_heading_pictures_text}>{t('Water')}</Text>
-        </View>
-        <View style={styles.add_drinks_picture_column}>
-          {/*First row of drinks*/}
-          <View style={styles.add_drink_picture_row}>
-            <View style={styles.add_drink_picture_item}>
-              <Pressable style={styles.add_drink_picture_pressable} onPress={() => {setFirstPicture("1"), setAmounth(100)}}>
-                <Image source={require("./assets/drinks_water/cup_blue.png")} style={styles.image}/>
-              </Pressable>
-              <Text style={styles.add_drink_picture_text}>100 ml</Text>
+        </Pressable>
+
+        {(!showWater) ? null :
+          <View style={styles.add_drinks_picture_column}>
+            {/*First row of drinks*/}
+            <View style={styles.add_drink_picture_row}>
+              <View style={styles.add_drink_picture_item}>
+                <Pressable style={styles.add_drink_picture_pressable} onPress={() => {
+                  setFirstPicture("1"), setAmounth(100)
+                }}>
+                  <Image source={require("./assets/drinks/water/cup_blue.png")} style={styles.image} />
+                </Pressable>
+                <Text style={styles.add_drink_picture_text}>100 ml</Text>
+              </View>
+
+              <View style={styles.add_drink_picture_item}>
+                <Pressable style={styles.add_drink_picture_pressable} onPress={() => {
+                  setFirstPicture("2"), setAmounth(150)
+                }}>
+                  <Image source={require("./assets/drinks/water/glass_blue.png")} style={styles.image} />
+                </Pressable>
+                <Text style={styles.add_drink_picture_text}>150 ml</Text>
+              </View>
+
+              <View style={styles.add_drink_picture_item}>
+                <Pressable style={styles.add_drink_picture_pressable} onPress={() => {
+                  setFirstPicture("2"), setAmounth(300)
+                }}>
+                  <Image source={require("./assets/drinks/water/glass_blue.png")} style={styles.image} />
+                </Pressable>
+                <Text style={styles.add_drink_picture_text}>300 ml</Text>
+              </View>
+
+              <View style={styles.add_drink_picture_item}>
+                <Pressable style={styles.add_drink_picture_pressable} onPress={() => {
+                  setFirstPicture("3"), setAmounth(500)
+                }}>
+                  <Image source={require("./assets/drinks/water/big_glass_blue.png")} style={styles.image} />
+                </Pressable>
+                <Text style={styles.add_drink_picture_text}>500 ml</Text>
+              </View>
             </View>
 
-            <View style={styles.add_drink_picture_item}>
-              <Pressable style={styles.add_drink_picture_pressable} onPress={() => {setFirstPicture("2"), setAmounth(150)}}>
-              <Image source={require("./assets/drinks_water/glass_blue.png")} style={styles.image}/>
-              </Pressable>
-              <Text style={styles.add_drink_picture_text}>150 ml</Text>
-            </View>
+            {/*Second row of drinks*/}
+            <View style={styles.add_drink_picture_row}>
+              <View style={styles.add_drink_picture_item}>
+                <Pressable style={styles.add_drink_picture_pressable} onPress={() => {
+                  setFirstPicture("3"), setAmounth(750)
+                }}>
+                  <Image source={require("./assets/drinks/water/big_glass_blue.png")} style={styles.image} />
+                </Pressable>
+                <Text style={styles.add_drink_picture_text}>750 ml</Text>
+              </View>
 
-            <View style={styles.add_drink_picture_item}>
-              <Pressable style={styles.add_drink_picture_pressable} onPress={() => {setFirstPicture("2"),setAmounth(300)}}>
-              <Image source={require("./assets/drinks_water/glass_blue.png")} style={styles.image}/>
-              </Pressable>
-              <Text style={styles.add_drink_picture_text}>300 ml</Text>
-            </View>
+              <View style={styles.add_drink_picture_item}>
+                <Pressable style={styles.add_drink_picture_pressable} onPress={() => {
+                  setFirstPicture("4"), setAmounth(1500)
+                }}>
+                  <Image source={require("./assets/drinks/water/bottle_blue.png")} style={styles.image} />
+                </Pressable>
+                <Text style={styles.add_drink_picture_text}>1500 ml</Text>
+              </View>
 
-            <View style={styles.add_drink_picture_item}>
-              <Pressable style={styles.add_drink_picture_pressable} onPress={() => {setFirstPicture("3"),setAmounth(500)}}>
-                <Image source={require("./assets/drinks_water/big_glass_blue.png")} style={styles.image}/>
-              </Pressable>
-              <Text style={styles.add_drink_picture_text}>500 ml</Text>
+              <View style={styles.add_drink_picture_item}>
+                <Pressable style={styles.add_drink_picture_pressable} onPress={() => {
+                  setFirstPicture("4"), setAmounth(2000)
+                }}>
+                  <Image source={require("./assets/drinks/water/bottle_blue.png")} style={styles.image} />
+                </Pressable>
+                <Text style={styles.add_drink_picture_text}>2000 ml</Text>
+              </View>
             </View>
           </View>
+        }
 
-          {/*Second row of drinks*/}
-          <View style={styles.add_drink_picture_row}>
-            <View style={styles.add_drink_picture_item}>
-              <Pressable style={styles.add_drink_picture_pressable} onPress={() => {setFirstPicture("3"),setAmounth(750)}}>
-                <Image source={require("./assets/drinks_water/big_glass_blue.png")} style={styles.image}/>
-              </Pressable>
-              <Text style={styles.add_drink_picture_text}>750 ml</Text>
-            </View>
+        {/*JUICE*/}
+        <Pressable style={styles.add_drink_heading_pictures} onPress={() => setShowJuice(!showJuice)}>
+          <Text style={styles.add_drink_heading_pictures_text}>{t('Juice')}</Text>
+        </Pressable>
 
-            <View style={styles.add_drink_picture_item}>
-              <Pressable style={styles.add_drink_picture_pressable} onPress={() => {setFirstPicture("4"),setAmounth(1500)}}>
-                <Image source={require("./assets/drinks_water/bottle_blue.png")} style={styles.image}/>
-              </Pressable>
-              <Text style={styles.add_drink_picture_text}>1500 ml</Text>
-            </View>
+        {(!showJuice) ? null :
+          <View style={styles.add_drinks_picture_column}>
+            {/*First row of drinks*/}
+            <View style={styles.add_drink_picture_row}>
+              <View style={styles.add_drink_picture_item}>
+                <Pressable style={styles.add_drink_picture_pressable} onPress={() => {
+                  setFirstPicture("5"), setAmounth(200)
+                }}>
+                  <Image source={require("./assets/drinks/juice/glass_orange.png")} style={styles.image} />
+                </Pressable>
+                <Text style={styles.add_drink_picture_text}>200 ml</Text>
+              </View>
 
-            <View style={styles.add_drink_picture_item}>
-              <Pressable style={styles.add_drink_picture_pressable} onPress={() => {setFirstPicture("4"),setAmounth(2000)}}>
-                <Image source={require("./assets/drinks_water/bottle_blue.png")} style={styles.image}/>
-              </Pressable>
-              <Text style={styles.add_drink_picture_text}>2000 ml</Text>
+              <View style={styles.add_drink_picture_item}>
+                <Pressable style={styles.add_drink_picture_pressable} onPress={() => {
+                  setFirstPicture("5"), setAmounth(250)
+                }}>
+                  <Image source={require("./assets/drinks/juice/glass_orange.png")} style={styles.image} />
+                </Pressable>
+                <Text style={styles.add_drink_picture_text}>250 ml</Text>
+              </View>
+
+              <View style={styles.add_drink_picture_item}>
+                <Pressable style={styles.add_drink_picture_pressable} onPress={() => {
+                  setFirstPicture("6"), setAmounth(1000)
+                }}>
+                  <Image source={require("./assets/drinks/juice/bottle_orange.png")} style={styles.image} />
+                </Pressable>
+                <Text style={styles.add_drink_picture_text}>1000 ml</Text>
+              </View>
+
+              <View style={styles.add_drink_picture_item}>
+                <Pressable style={styles.add_drink_picture_pressable} onPress={() => {
+                  setFirstPicture("6"), setAmounth(2000)
+                }}>
+                  <Image source={require("./assets/drinks/juice/bottle_orange.png")} style={styles.image} />
+                </Pressable>
+                <Text style={styles.add_drink_picture_text}>2000 ml</Text>
+              </View>
             </View>
           </View>
-        </View>
+        }
+
+        {/*MILK*/}
+        <Pressable style={styles.add_drink_heading_pictures} onPress={() => setShowMilk(!showMilk)}>
+          <Text style={styles.add_drink_heading_pictures_text}>{t('Milk')}</Text>
+        </Pressable>
+
+        {(!showMilk) ? null :
+          <View style={styles.add_drinks_picture_column}>
+            {/*First row of drinks*/}
+            <View style={styles.add_drink_picture_row}>
+              <View style={styles.add_drink_picture_item}>
+                <Pressable style={styles.add_drink_picture_pressable} onPress={() => {
+                  setFirstPicture("7"), setAmounth(200)
+                }}>
+                  <Image source={require("./assets/drinks/milk/glass_white.png")} style={styles.image} />
+                </Pressable>
+                <Text style={styles.add_drink_picture_text}>200 ml</Text>
+              </View>
+
+              <View style={styles.add_drink_picture_item}>
+                <Pressable style={styles.add_drink_picture_pressable} onPress={() => {
+                  setFirstPicture("7"), setAmounth(300)
+                }}>
+                  <Image source={require("./assets/drinks/milk/glass_white.png")} style={styles.image} />
+                </Pressable>
+                <Text style={styles.add_drink_picture_text}>300 ml</Text>
+              </View>
+
+                <View style={styles.add_drink_picture_item}>
+                  <Pressable style={styles.add_drink_picture_pressable} onPress={() => {
+                    setFirstPicture("8"), setAmounth(500)
+                  }}>
+                    <Image source={require("./assets/drinks/milk/big_glass_white.png")} style={styles.image} />
+                  </Pressable>
+                  <Text style={styles.add_drink_picture_text}>500 ml</Text>
+              </View>
+            </View>
+          </View>
+        }
+
+        {/*COFFEE*/}
+        <Pressable style={styles.add_drink_heading_pictures} onPress={() => setShowCoffee(!showCoffee)}>
+          <Text style={styles.add_drink_heading_pictures_text}>{t('Coffee')}</Text>
+        </Pressable>
+
+        {(!showCoffee) ? null :
+          <View style={styles.add_drinks_picture_column}>
+            {/*First row of drinks*/}
+            <View style={styles.add_drink_picture_row}>
+              <View style={styles.add_drink_picture_item}>
+                <Pressable style={styles.add_drink_picture_pressable} onPress={() => {
+                  setFirstPicture("9"), setAmounth(100)
+                }}>
+                  <Image source={require("./assets/drinks/coffee/cup_brown.png")} style={styles.image} />
+                </Pressable>
+                <Text style={styles.add_drink_picture_text}>100 ml</Text>
+              </View>
+
+              <View style={styles.add_drink_picture_item}>
+                <Pressable style={styles.add_drink_picture_pressable} onPress={() => {
+                  setFirstPicture("9"), setAmounth(150)
+                }}>
+                  <Image source={require("./assets/drinks/coffee/cup_brown.png")} style={styles.image} />
+                </Pressable>
+                <Text style={styles.add_drink_picture_text}>150 ml</Text>
+              </View>
+
+              <View style={styles.add_drink_picture_item}>
+                <Pressable style={styles.add_drink_picture_pressable} onPress={() => {
+                  setFirstPicture("10"), setAmounth(300)
+                }}>
+                  <Image source={require("./assets/drinks/coffee/glass_brown.png")} style={styles.image} />
+                </Pressable>
+                <Text style={styles.add_drink_picture_text}>200 ml</Text>
+              </View>
+
+              <View style={styles.add_drink_picture_item}>
+                <Pressable style={styles.add_drink_picture_pressable} onPress={() => {
+                  setFirstPicture("11"), setAmounth(1000)
+                }}>
+                  <Image source={require("./assets/drinks/coffee/custom_brown.png")} style={styles.image} />
+                </Pressable>
+                <Text style={styles.add_drink_picture_text}>1000 ml</Text>
+              </View>
+            </View>
+          </View>
+        }
 
         {/*CUSTOM FROM HERE*/}
-        <View style={styles.add_drink_heading_pictures}>
+        <Pressable style={styles.add_drink_heading_pictures} onPress={() => setShowCustom(!showCustom)}>
           <Text style={styles.add_drink_heading_pictures_text}>{t('Own')}</Text>
-        </View>
+        </Pressable>
         <View style={{flex: 2, justifyContent: "center", alignItems: "center", marginBottom: 20}}>
-          {(userImages !== null)
+          {(userImages !== null && showCustom)
             ? userImages
             : null}
         </View>
@@ -180,23 +343,33 @@ export function AddDrink ({route, navigation}) {
 
 function AddCustomDrink({navigation}) {
   const { t, i18n } = useTranslation();
-  const [userImmage, setUserImmage] = React.useState(require("./assets/glass.png"))
+  const [userImmage, setUserImmage] = React.useState(require("./assets/empty/glass.png"))
   const [number,setNumber] = React.useState(null)
   const [showButton, setShowButton] = React.useState(false)
 
   const userPicture = async(using) => {
     let result
-    if(using === "camera"){
-      result = await launchCamera({saveToPhotos: true}).catch((e) => {console.log(e)})
-    }
-    else {
-      result = await launchImageLibrary().catch((e) => {console.log(e)})
-    }
+    let permisionscamer = null
+    let permissionsstorage = null
+    if(Platform.OS === "android") {
+      permissionsstorage = await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE)
+      permisionscamer = await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.CAMERA)
 
-    if (result["didCancel"] !== true || result["didCancel"] === undefined) {
-      let uri = result["assets"][0]["uri"]
+      if (using === "camera") {
+        result = await launchCamera({ saveToPhotos: true }).catch((e) => {
+          console.log(e)
+        })
+      } else {
+        result = await launchImageLibrary().catch((e) => {
+          console.log(e)
+        })
+      }
 
-      setUserImmage({ uri: uri })
+      if ((result["didCancel"] !== true || result["didCancel"] === undefined) && permisionscamer === PermissionsAndroid.RESULTS.GRANTED && permissionsstorage === PermissionsAndroid.RESULTS.GRANTED)  {
+        let uri = result["assets"][0]["uri"]
+
+        setUserImmage({ uri: uri })
+      }
     }
   }
 
@@ -210,7 +383,7 @@ function AddCustomDrink({navigation}) {
         <TextInput
           style = {{borderWidth: 2, width: 200, color: "black", fontSize: 15, fontWeight: "500", paddingLeft: 10, backgroundColor: "white"}}
           onChangeText={setNumber}
-          placeholderTextColor={"black"}
+          placeholderTextColor={"grey"}
           value={number}
           placeholder={t('Insert the drink amounth')}
           keyboardType="numeric"
@@ -218,7 +391,7 @@ function AddCustomDrink({navigation}) {
       </View>
 
       {/*BUTTON AREA*/ }
-      {(userImmage !== require("./assets/glass.png") && number !== null) ?
+      {(userImmage !== require("./assets/empty/glass.png") && number !== null) ?
         <View style={{alignItems: "center", position: "absolute", width: "100%", bottom: "10%"}}>
           <TouchableOpacity style={styles.button} onPress={() => navigation.navigate("AddDrink",[userImmage, number])}>
             <Text style={styles.button_text}>{t('Add Drink')}</Text>
@@ -258,7 +431,7 @@ const styles = StyleSheet.create({
     flex: 1,
     width: null,
     height: 100,
-    resizeMode: 'center',
+    resizeMode: 'contain',
   },
   add_drink_headings: {
     flex: 1, flexDirection: "row", justifyContent: "space-between",

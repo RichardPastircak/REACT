@@ -1,27 +1,18 @@
 import * as React from "react";
-import {
-  Button,
-  Image,
-  ImageBackground,
-  Pressable,
-  SafeAreaView,
-  ScrollView,
-  StyleSheet,
-  Text, TouchableOpacity,
-  View,
+import { Button,  Image, ImageBackground, Platform, Pressable, SafeAreaView, ScrollView, StyleSheet,
+  Text, TouchableOpacity, View,
 } from "react-native";
-import DynamicComponent from "react-native-dynamic-render";
-import { openAppWithData } from "react-native-send-intent";
+import NetInfo from "@react-native-community/netinfo";
+import {useTranslation} from "react-i18next";
+import './i18n';
 
 export function Api ({navigation}) {
+  const { t, i18n } = useTranslation();
   const [dynamicData, setDynamicData] = React.useState(null)
   const [currAlcoholic, setCurrAlcoholic] = React.useState(0)
   const [currNonAlcoholic, setCurrNonAlcoholic] = React.useState(0)
   const [currDrinkType, setCurrDrinkType] = React.useState("ALCOHOLIC")
-
-  const [data, setData] = React.useState([])
-  const [props, setProps] = React.useState({name:"view", _uid: "1",})
-  const [dataChanged, setDataChanged] = React.useState(false)
+  const [userOnline, setUserOnline] = React.useState(false)
 
   //nazov,kategoria, pohar, pocet ingredincii, ingredience, mierkaingerdiencii, obrazok -> 8
   const dynamicRedner = (data) => {
@@ -37,12 +28,12 @@ export function Api ({navigation}) {
       //kategoria
       formatedData.push(<Text key={"text"+(100+1)}
         style={{color: "darkblue", fontSize: 25, fontWeight: "bold", textAlign: "center", position: "absolute", top: "10%", width: "100%"}}>
-        Category of drink: {data[0][1]}</Text>)
+        {t('Category of drink')}: {t(data[0][1])}</Text>)
 
       //pohar
       formatedData.push(<Text key={"text"+(100+2)}
         style={{color: "darkblue", fontSize: 20, fontWeight: "bold", textAlign: "center", position: "absolute", top: "18%", width: "100%"}}>
-        Glass type: {data[0][2]}</Text>)
+        {t('Glass type')}: {t(data[0][2])}</Text>)
 
       //obrazok
       formatedData.push(<Image source={{uri: data[0][6]}} key={"image"}
@@ -51,7 +42,7 @@ export function Api ({navigation}) {
       //ingredience heading
       formatedData.push(<Text key={"text"+(100+3)}
         style={{color: "darkblue", fontSize: 25, fontWeight: "bold", textAlign: "center", position: "absolute", top: "63%", width: "100%"}}
-        >Ingredience:</Text>)
+        >{t('Ingredients')}:</Text>)
 
       //margin for ingredience
       formatedData.push(<View key={"view"} style={{height: "55%", }}/>)
@@ -61,7 +52,7 @@ export function Api ({navigation}) {
       for (let j = 0; j < length-1; j++){
         formatedData.push(<Text key={"text"+(200+4+j)}
           style={{color: "darkblue", fontSize: 13, fontWeight: "500", textAlign: "left", marginLeft: "12%"}}
-          >{data[0][5][j]} of {data[0][4][j]} </Text>) //meritko j + ingredianca j
+          >► {t(data[0][5][j])} {t('of')} {data[0][4][j]} </Text>) //meritko j + ingredianca j
       }
 
     setDynamicData(formatedData)
@@ -70,6 +61,7 @@ export function Api ({navigation}) {
   const apiData = async () => {
     let position = (currDrinkType === "ALCOHOLIC") ? currAlcoholic : currNonAlcoholic
     let drinktype = (currDrinkType === "ALCOHOLIC") ? "Alcoholic" : "Non_Alcoholic"
+    //console.log("api test:" + position + " " + drinktype)
     try{
       let formatedData = []
         let result = await fetch(
@@ -103,59 +95,69 @@ export function Api ({navigation}) {
     }
   }
 
+  function isUserOnline() {
+    if (Platform.OS === "android") {
+      NetInfo.fetch().then(state => {
+        if(state.isConnected){
+          apiData().then((d) => setUserOnline(true))
+        }
+        else{
+          setUserOnline(false)}
+      }).catch(error => console.error("Checking Wi-fi failed: " + error));
+    }
+  }
+
   React.useEffect(() => {
-    console.log(currAlcoholic + ' ' + currDrinkType + ' ' + currNonAlcoholic)
-    apiData()
-  },[currAlcoholic, currDrinkType, currNonAlcoholic])
+   isUserOnline()
+    //console.log(currAlcoholic + ' ' + currDrinkType + ' ' + currNonAlcoholic)
+  },[currDrinkType, currAlcoholic, currNonAlcoholic])
 
   return (
     <SafeAreaView style={styles.screen}>
-      <View style={{flex: 1, justifyContent: "center"}}>
-        {/* <DynamicComponent
-            {...props}
-            mapComponents = {mapComponents}
-       />*/}
-       {dynamicData}
-      </View>
-      <View style={{flexDirection: "row", justifyContent: "space-evenly", marginBottom: "2%"}}>
+      {(!userOnline) ? null :
+        <View style={{ flex: 1, justifyContent: "center" }}>
+          {dynamicData}
+        </View>
+      }
+      {(!userOnline) ? <TouchableOpacity style={{flex: 1, justifyContent: "center", alignItems: "center"}} onPress={() => isUserOnline()}>
+          <Text style={{color: "white", fontWeight: "bold", fontSize: 20 ,backgroundColor: "darkblue", padding: "2.5%", borderRadius: 10}}>RELOAD</Text></TouchableOpacity>
+        :
+        <View style={{flexDirection: "row", justifyContent: "space-evenly", marginBottom: "2%"}}>
         <TouchableOpacity style={styles.button} onPress={() => {
           let tmp
-          if(currDrinkType === "ALCOHOLIC"){
-            tmp = (currAlcoholic-1 < 10) ? 0 : (currAlcoholic-1)
+          if (currDrinkType === "ALCOHOLIC") {
+            tmp = (currAlcoholic - 1 < 0) ? 10 : (currAlcoholic - 1)
             setCurrAlcoholic(tmp)
-          }
-          else{
-            tmp = (currNonAlcoholic-1 < 10) ? 0 : (currNonAlcoholic-1)
+          } else {
+            tmp = (currNonAlcoholic - 1 < 0) ? 10 : (currNonAlcoholic - 1)
             setCurrNonAlcoholic(tmp)
           }
-          apiData()
-        }}>
-          <Text style={styles.text}>PREVIOUS</Text>
+      }}>
+        <Text style={styles.text}>{t('BACK')}</Text>
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.button} onPress={() => {
-          let tmp = (currDrinkType === "ALCOHOLIC") ? "NONALCOHOLIC" : "ALCOHOLIC"
-          setCurrDrinkType(tmp)
-          apiData()
-        }}>
-          <Text style={styles.text}>{(currDrinkType === "ALCOHOLIC") ? "NONALCOHOLIC" : "ALCOHOLIC"}</Text>
+            let tmp = (currDrinkType === "ALCOHOLIC") ? "NONALCOHOLIC" : "ALCOHOLIC"
+            setCurrDrinkType(tmp)
+      }}>
+        <Text style={styles.text}>{(currDrinkType === "ALCOHOLIC") ? t('NONALCOHOLIC') : t('ALCOHOLIC')}</Text>
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.button} onPress={() => {
-          let tmp
-          if(currDrinkType === "ALCOHOLIC"){
-            tmp = (currAlcoholic+1> 9) ? 0 : (currAlcoholic+1)
+            let tmp
+            if(currDrinkType === "ALCOHOLIC"){
+            tmp = (currAlcoholic+1> 10) ? 0 : (currAlcoholic+1)
             setCurrAlcoholic(tmp)
-          }
-          else{
-            tmp = (currNonAlcoholic+1 > 10) ? 0 : (currNonAlcoholic+1)
-            setCurrNonAlcoholic(tmp)
-          }
-          apiData()
-        }}>
-          <Text style={styles.text}>NEXT</Text>
+            }
+            else {
+              tmp = (currNonAlcoholic + 1 > 10) ? 0 : (currNonAlcoholic + 1)
+              setCurrNonAlcoholic(tmp)
+            }
+      }}>
+        <Text style={styles.text}>{t('FORWARD')}</Text>
         </TouchableOpacity>
-      </View>
+        </View>
+      }
     </SafeAreaView>
   )
 }
