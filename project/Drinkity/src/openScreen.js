@@ -1,33 +1,41 @@
 import * as React from "react";
-import { Alert, SafeAreaView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { SafeAreaView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useItems } from "./reduxstuff";
 import {useTranslation} from "react-i18next";
 import './i18n';
 
-async function calculateWaterAmounth (age, weight) {
-  let waterAmounth
-
-  if (age < 1){waterAmounth = 150*weight}
-  else if(age < 6){waterAmounth = 112*weight}
-  else if(age < 12) {waterAmounth = 85*weight}
-  else if(age < 18) {waterAmounth = 50*weight}
-  else {waterAmounth = 32*weight}
-
-  try {
-    await AsyncStorage.setItem('waterAmounth', JSON.stringify(waterAmounth))
-  } catch (e) {
-    console.error("Couldn't save user suggest water amounth: " + e)
-  }
-  return({"waterAmounth": waterAmounth})
-}
-
 export function mainUserData ({navigation}){
   const { t, i18n } = useTranslation();
   const [age, setAge] = React.useState(null)
   const [weight,setWeight] = React.useState(null)
+  const [waterAmounth, setWaterAmounth] = React.useState(0)
 
   const [itemsOpen, setItemsOpen] = useItems();
+
+  async function calculateWaterAmounth (age, weight) {
+    let newWaterAmounth
+
+    if (age < 1){newWaterAmounth = 150*weight}
+    else if(age < 6){newWaterAmounth = 112*weight}
+    else if(age < 12) {newWaterAmounth = 85*weight}
+    else if(age < 18) {newWaterAmounth = 50*weight}
+    else {newWaterAmounth = 32*weight}
+
+    try {
+      await AsyncStorage.setItem('waterAmounth', JSON.stringify(newWaterAmounth))
+    } catch (e) {
+      console.error("Couldn't save user suggest water amounth: " + e)
+    }
+    setWaterAmounth(newWaterAmounth)
+  }
+
+  React.useEffect(() =>{
+    if(waterAmounth !== 0){
+      setItemsOpen({"waterAmounth": waterAmounth});
+      navigation.navigate('Home',itemsOpen)
+    }
+  },[waterAmounth])
 
   return(
     <SafeAreaView style={styles.screen}>
@@ -64,9 +72,7 @@ export function mainUserData ({navigation}){
 
       <TouchableOpacity style={{flex: 0.25, justifyContent: "center", alignItems: "center", width: "100%", marginBottom: "5%"}}
                         onPress={() => {
-                          let tmp = calculateWaterAmounth(age, weight)
-                          setItemsOpen(tmp)
-                          navigation.navigate("Home",tmp)
+                          calculateWaterAmounth(age, weight)
                         }}>
         <Text
           style={{color: "white", fontWeight: "bold", fontSize: 20, backgroundColor: "darkblue", padding: "3%", paddingLeft: "10%", paddingRight: "10%",
@@ -82,6 +88,32 @@ export function settings({navigation}){
   const [age, setAge] = React.useState(null)
   const [weight,setWeight] = React.useState(null)
   const [itemsSettings, setItemsSetting] = useItems();
+  const [waterAmounth, setWaterAmounth] = React.useState(null)
+
+  async function calculateWaterAmounth (age, weight) {
+    let newWaterAmounth
+
+    if (age < 1){newWaterAmounth = 150*weight}
+    else if(age < 6){newWaterAmounth = 112*weight}
+    else if(age < 12) {newWaterAmounth = 85*weight}
+    else if(age < 18) {newWaterAmounth = 50*weight}
+    else {newWaterAmounth = 32*weight}
+
+    try {
+      await AsyncStorage.setItem('waterAmounth', JSON.stringify(newWaterAmounth))
+    } catch (e) {
+      console.error("Couldn't save user suggest water amounth: " + e)
+    }
+
+    setWaterAmounth(newWaterAmounth)
+  }
+
+  React.useEffect(() => {
+    if(waterAmounth !== null){
+      setItemsSetting({"waterAmounth": waterAmounth})
+      navigation.navigate('Home', itemsSettings)
+    }
+  },[waterAmounth])
 
   return(
     <SafeAreaView style={styles.screen}>
@@ -117,8 +149,7 @@ export function settings({navigation}){
       </View>
 
       <TouchableOpacity style={{flex: 0.25, justifyContent: "center", alignItems: "center", width: "100%", marginBottom: "5%"}} onPress={() => {
-        setItemsSetting({"waterAmounth": calculateWaterAmounth(age,weight)})
-        navigation.navigate("Home",itemsSettings)
+        calculateWaterAmounth(age,weight)
       }}>
         <Text
           style={{color: "white", fontWeight: "bold", fontSize: 20, backgroundColor: "darkblue", padding: "3%", paddingLeft: "10%", paddingRight: "10%",

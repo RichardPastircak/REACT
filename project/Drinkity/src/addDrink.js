@@ -2,7 +2,6 @@ import React, { useEffect } from "react";
 import {
   View,
   TextInput,
-  Button,
   SafeAreaView,
   Text,
   Pressable,
@@ -12,7 +11,6 @@ import {
   TouchableOpacity, Platform, PermissionsAndroid,
 } from "react-native";
 import {useItems} from './reduxstuff';
-import { ItemsProvider} from "./reduxstuff.js";
 import {launchCamera, launchImageLibrary} from 'react-native-image-picker';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import AsyncStorage from "@react-native-async-storage/async-storage";

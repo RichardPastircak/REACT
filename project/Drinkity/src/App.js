@@ -64,10 +64,11 @@ function Home ({route, navigation}){
     //removeItemm(day)
     loadData(day).then((water) => {
       if(water != null){
+        console.log(water)
         updateMainPicture(water/suggestedWater*100)
         setWater(water)
       }
-      else{drink(0); updateMainPicture(0)}
+      else{setWater(0); updateMainPicture(0)}
     })
   },[suggestedWater])
 
@@ -83,7 +84,6 @@ function Home ({route, navigation}){
           setSuggestedWater(value)
           setWaterAmounthRecieved(true)
         }
-        //await AsyncStorage.removeItem('waterAmounth')
       } catch(e) {  console.error("Something when terrible wrong when loading user waterAmounth: " + e) }
     }
 
