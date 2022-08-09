@@ -14,3 +14,4 @@ Video, v ktorom vysvetľujem základne funkcie aplikácie: https://youtu.be/hpem
 aplikácia, ktorá služí na volanie, jedná sa kópiu určitej šablony ktorá bola zadaná v rámci projektu
 
 <h1>Compas</h1>
+aplikácia, ktorá slúži ako jednoduchý kompas
